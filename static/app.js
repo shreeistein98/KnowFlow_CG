@@ -7,6 +7,7 @@ class ChatUI {
         this.videoButton = document.querySelector('button i.fa-video').parentElement;
         this.fileButton = document.querySelector('button i.fa-paperclip').parentElement;
         this.webButton = document.querySelector('button i.fa-globe').parentElement;
+        this.localModelButton = document.querySelector('button i.fa-microchip').parentElement;
         this.ragToggle = document.getElementById('rag-toggle');
         this.ragIndicator = document.getElementById('rag-indicator');
         this.pencilButton = document.querySelector('i.fa-pencil').parentElement;
@@ -26,6 +27,7 @@ class ChatUI {
         this.isImageMode = false;
         this.isVideoMode = false;
         this.isWebMode = false;
+        this.isLocalMode = false;
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.videoStream = null;
@@ -85,6 +87,33 @@ class ChatUI {
             } else {
                 this.webButton.classList.remove('text-red-500', 'bg-red-100', 'rounded-full');
                 this.webButton.classList.add('text-gray-600');
+                this.userInput.placeholder = "Type your message...";
+            }
+        });
+
+        // Local Model button handler
+        this.localModelButton.addEventListener('click', () => {
+            this.isLocalMode = !this.isLocalMode;
+            // Reset other modes
+            this.isImageMode = false;
+            this.isVideoMode = false;
+            this.isWebMode = false;
+            
+            if (this.isLocalMode) {
+                this.localModelButton.classList.remove('text-gray-600');
+                this.localModelButton.classList.add('text-red-500', 'bg-red-100', 'rounded-full');
+                this.userInput.placeholder = "Using Llama 3.2 3B local model...";
+                
+                // Reset other buttons
+                this.galleryButton.classList.remove('text-red-500', 'bg-red-100', 'rounded-full');
+                this.galleryButton.classList.add('text-gray-600');
+                this.videoButton.classList.remove('text-red-500', 'bg-red-100', 'rounded-full');
+                this.videoButton.classList.add('text-gray-600');
+                this.webButton.classList.remove('text-red-500', 'bg-red-100', 'rounded-full');
+                this.webButton.classList.add('text-gray-600');
+            } else {
+                this.localModelButton.classList.remove('text-red-500', 'bg-red-100', 'rounded-full');
+                this.localModelButton.classList.add('text-gray-600');
                 this.userInput.placeholder = "Type your message...";
             }
         });
@@ -211,7 +240,8 @@ class ChatUI {
                     is_image_mode: this.isImageMode,
                     is_video_mode: this.isVideoMode,
                     is_rag_mode: this.isRagMode,
-                    is_web_mode: this.isWebMode
+                    is_web_mode: this.isWebMode,
+                    is_local_mode: this.isLocalMode
                 })
             });
 

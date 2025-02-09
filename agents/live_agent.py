@@ -17,10 +17,7 @@ class LiveAgent:
         # Initialize Gemini client
         self.client = genai.Client(
             api_key=api_key,
-            http_options={
-                'api_version': 'v1alpha',
-                'url': 'generativelanguage.googleapis.com'
-            }
+            http_options={'api_version': 'v1alpha'}
         )
         self.model = "models/gemini-2.0-flash-exp"
 
@@ -29,22 +26,15 @@ class LiveAgent:
         try:
             while True:
                 try:
-                    # Use receive_text() for FastAPI WebSocket
                     message = await client_websocket.receive_text()
                     data = json.loads(message)
                     
                     if "realtime_input" in data:
                         for chunk in data["realtime_input"]["media_chunks"]:
                             if chunk["mime_type"] == "audio/pcm":
-                                await session.send({
-                                    "mime_type": "audio/pcm", 
-                                    "data": chunk["data"]
-                                })
+                                await session.send(input={"mime_type": "audio/pcm", "data": chunk["data"]})
                             elif chunk["mime_type"] == "image/jpeg":
-                                await session.send({
-                                    "mime_type": "image/jpeg", 
-                                    "data": chunk["data"]
-                                })
+                                await session.send(input={"mime_type": "image/jpeg", "data": chunk["data"]})
                             
                 except websockets.exceptions.ConnectionClosed:
                     print("Client connection closed")
@@ -62,7 +52,9 @@ class LiveAgent:
         try:
             while True:
                 try:
+                    print("receiving from gemini")
                     async for response in session.receive():
+                        print(f"response: {response}")
                         if response.server_content is None:
                             print(f'Unhandled server message! - {response}')
                             continue
@@ -70,7 +62,10 @@ class LiveAgent:
                         model_turn = response.server_content.model_turn
                         if model_turn:
                             for part in model_turn.parts:
-                                if hasattr(part, 'inline_data') and part.inline_data is not None:
+                                print(f"part: {part}")
+                                if hasattr(part, 'text') and part.text is not None:
+                                    await client_websocket.send_text(json.dumps({"text": part.text}))
+                                elif hasattr(part, 'inline_data') and part.inline_data is not None:
                                     print("Processing audio response")
                                     print("Audio mime_type:", part.inline_data.mime_type)
                                     base64_audio = base64.b64encode(part.inline_data.data).decode('utf-8')
@@ -78,6 +73,9 @@ class LiveAgent:
                                         "audio": base64_audio
                                     }))
                                     print("Audio sent to client")
+
+                        if response.server_content.turn_complete:
+                            print('\n<Turn complete>')
 
                 except websockets.exceptions.ConnectionClosed:
                     print("Client connection closed normally (receive)")
@@ -113,3 +111,4 @@ class LiveAgent:
             print(f"Error in Gemini session: {e}")
         finally:
             print("Gemini session closed")
+

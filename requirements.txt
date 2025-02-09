@@ -12,6 +12,7 @@ nest_asyncio
 
 # AI and ML
 google-genai
+# genai==0.3.0
 google-generativeai
 sentence-transformers
 llama-index-core
@@ -25,10 +26,12 @@ google-cloud-texttospeech
 
 # Additional dependencies
 aiohttp
-scrapy
-playwright
 
 # WebSocket
 websockets==14.1
 asyncio==3.4.3
+
+# Gradio
+gradio-client
+
 

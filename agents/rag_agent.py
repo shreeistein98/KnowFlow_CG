@@ -13,6 +13,7 @@ import uuid
 from llama_parse import LlamaParse
 import asyncio
 import sys
+import aiohttp
 
 # Only apply nest_asyncio if we're not using uvloop
 if 'uvloop' not in sys.modules:
@@ -23,25 +24,25 @@ class RagAgent:
     def __init__(self):
         load_dotenv()
         self.llama_api_key = os.getenv("LLAMA_CLOUD_API_KEY")
-        self.gemini_api_key = os.getenv("GEMINI_API_KEY")
         
         if not self.llama_api_key:
             raise ValueError("LLAMA_CLOUD_API_KEY not found in environment variables")
-        if not self.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment variables")
             
-        # Configure Gemini
-        genai.configure(api_key=self.gemini_api_key)
-        self.llm = genai.GenerativeModel('gemini-pro')
-        
         # Initialize embedding model
         self.embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             cache_folder="./cache"
         )
         
-        # Initialize ChromaDB
-        self.chroma_client = chromadb.Client()
+        # Initialize Ollama endpoint
+        self.ollama_url = "http://localhost:11434/api/generate"
+        self.model = "llama3.2"
+        
+        # Create data directory if it doesn't exist
+        os.makedirs("./data/chroma", exist_ok=True)
+        
+        # Initialize ChromaDB with persistent storage
+        self.chroma_client = chromadb.PersistentClient(path="./data/chroma")
         
         # Initialize LlamaParse for document parsing
         self.parser = LlamaParse(
@@ -273,7 +274,7 @@ class RagAgent:
 
     async def answer_question(self, question: str, session_id: str) -> str:
         """
-        Answer a question using RAG with Gemini.
+        Answer a question using RAG with local Llama 3.2 model.
         
         Args:
             question (str): User's question
@@ -292,21 +293,91 @@ class RagAgent:
             # Combine context chunks
             context = "\n\n".join(context_chunks)
             
-            # Create prompt for Gemini
-            prompt = f"""Based on the following context, please answer the question. 
+            # Create prompt for Llama
+            prompt = f'''Based on the following context, please answer the question. 
             If the answer cannot be found in the context, say so.
             
             Context:
             {context}
             
             Question: {question}
-            """
+            '''
             
-            # Get response from Gemini
-            response = await self.llm.generate_content_async(prompt)
+            # Prepare the request payload
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "top_k": 40
+                }
+            }
             
-            return response.text
+            # Send request to Ollama
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.ollama_url, json=payload) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return result.get("response", "Sorry, I couldn't generate a response.")
+                    else:
+                        return f"Error: Received status code {response.status}"
             
         except Exception as e:
             print(f"Error answering question: {str(e)}")
             raise
+
+    def edit_file(self, target_file: str, instructions: str, code_edit: str) -> None:
+        """I will fix the string formatting in the answer_question method."""
+        return {
+            "target_file": "agents/rag_agent.py",
+            "instructions": "I will fix the syntax error in the prompt string formatting",
+            "code_edit": """
+    async def answer_question(self, question: str, session_id: str) -> str:
+        try:
+            # Get relevant context
+            context_chunks = await self.get_relevant_context(question, session_id)
+            
+            if not context_chunks:
+                return "I don't have enough context to answer that question. Please make sure a document is uploaded first."
+            
+            # Combine context chunks
+            context = "\n\n".join(context_chunks)
+            
+            # Create prompt for Llama
+            prompt = f'''Based on the following context, please answer the question. 
+            If the answer cannot be found in the context, say so.
+            
+            Context:
+            {context}
+            
+            Question: {question}
+            '''
+            
+            # Prepare the request payload
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "top_k": 40
+                }
+            }
+            
+            # Send request to Ollama
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.ollama_url, json=payload) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return result.get("response", "Sorry, I couldn't generate a response.")
+                    else:
+                        return f"Error: Received status code {response.status}"
+            
+        except Exception as e:
+            print(f"Error answering question: {str(e)}")
+            raise
+"""
+        }

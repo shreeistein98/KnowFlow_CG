@@ -7,6 +7,7 @@ from agents.imagegen_agent import ImageGenAgent
 from agents.object_detection_agent import ObjectDetectionAgent
 from agents.rag_agent import RagAgent
 from agents.web_agent import WebAgent
+from agents.local_agent import LocalAgent
 from agents.live_agent import LiveAgent
 from pydantic import BaseModel
 import os
@@ -31,7 +32,8 @@ templates = Jinja2Templates(directory="templates")
 # Store user sessions with timestamps
 user_sessions: Dict[str, tuple[TextAgent, datetime]] = {}
 rag_agent = RagAgent()  # Initialize RAG agent
-live_agent = LiveAgent()  # Initialize a single LiveAgent instance
+local_agent = LocalAgent()  # Initialize local agent instance
+live_agent = LiveAgent()  # Initialize live agent instance
 
 class ChatMessage(BaseModel):
     message: str = ""
@@ -40,6 +42,7 @@ class ChatMessage(BaseModel):
     is_video_mode: bool = False
     is_rag_mode: bool = False
     is_web_mode: bool = False
+    is_local_mode: bool = False
     audio_data: Optional[str] = None
     image_data: Optional[str] = None
 
@@ -67,6 +70,13 @@ async def chat(message: ChatMessage):
             web_agent = WebAgent()
             async def generate_response():
                 async for chunk in web_agent.process_web_query(message.message):
+                    if chunk.strip():
+                        yield json.dumps({"chunk": chunk}, ensure_ascii=False) + "\n"
+            return StreamingResponse(generate_response(), media_type="application/x-ndjson")
+        elif message.is_local_mode:
+            # Use LocalAgent for Ollama-based responses
+            async def generate_response():
+                async for chunk in local_agent.get_streaming_response(message.message):
                     if chunk.strip():
                         yield json.dumps({"chunk": chunk}, ensure_ascii=False) + "\n"
             return StreamingResponse(generate_response(), media_type="application/x-ndjson")
