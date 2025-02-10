@@ -112,13 +112,15 @@ cd knowflow
 ```
 
 The Windows setup script will automatically:
-1. Install Python 3.11 if not present
+1. Install Python 3.11 (skipped if already installed)
 2. Create a Python virtual environment
 3. Activate the virtual environment
 4. Install uv package manager in the virtual environment
 5. Install project requirements using uv
 6. Install and configure Ollama
 7. Pull the Llama 3.2 model
+
+Note: The script checks for existing installations and skips steps that aren't needed. If you already have Python 3.11 installed, it will skip the installation step and proceed with creating the virtual environment.
 
 #### For macOS/Linux:
 ```bash
@@ -129,43 +131,54 @@ chmod +x setup.sh
 ```
 
 The macOS/Linux setup script will automatically:
-1. Install Homebrew (macOS only)
-2. Install Python 3.11
+1. Install Homebrew (macOS only, skipped if already installed)
+2. Install Python 3.11 (skipped if already installed)
 3. Create a Python virtual environment
 4. Activate the virtual environment
 5. Install uv package manager in the virtual environment
 6. Install project requirements using uv
-7. Install and configure Ollama
+7. Install and configure Ollama (skipped if already installed)
 8. Pull the Llama 3.2 model
+
+Note: The script checks for existing installations and skips steps that aren't needed. For example:
+- On macOS: If you already have Homebrew and Python 3.11 installed, it will skip those steps
+- On Linux: If Python 3.11 is already installed via your package manager (apt, dnf, etc.), it will skip that step
+- For both: If Ollama is already installed, it will skip the installation step
 
 ### Running the Application
 
-Start the application:
+**Important Note**: After running the setup script, you need to activate the virtual environment in a new terminal session before starting the application.
 
-**Note**: The virtual environment is already activated during setup. You only need to activate it again if you open a new terminal session.
+1. First, activate the virtual environment:
 
 #### For Windows:
 ```powershell
-# Only if opening a new terminal:
 .\venv\Scripts\Activate.ps1
-
-# Start the FastAPI server
-uvicorn main:app --reload
 ```
 
 #### For macOS/Linux:
 ```bash
-# Only if opening a new terminal:
 source venv/bin/activate
+```
 
-# Start the FastAPI server
+You should see `(venv)` appear at the beginning of your terminal prompt, indicating the virtual environment is active.
+
+2. Start the FastAPI server:
+```bash
 uvicorn main:app --reload
 ```
 
-Access the web interface at:
+3. Access the web interface at:
 ```
 http://localhost:8000
 ```
+
+### Subsequent Uses
+
+Every time you open a new terminal to work on the project:
+1. Navigate to the project directory
+2. Activate the virtual environment (using the commands above)
+3. Then you can run the server or other commands
 
 To stop the server:
 
