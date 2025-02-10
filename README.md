@@ -19,7 +19,7 @@ A modern, feature-rich AI assistant platform built with FastAPI, Gemini, and Tav
 
 ### 3. Local AI Model Support
 - Integration with Ollama for local model inference
-- Google's Gemma 2B model for offline processing
+- Meta's Llama 3.2 3B model for offline processing
 - Lightweight yet powerful responses
 - Privacy-focused local computation
 - Markdown formatting and code highlighting
@@ -57,7 +57,7 @@ A modern, feature-rich AI assistant platform built with FastAPI, Gemini, and Tav
   - Google Gemini 2.0 Flash for text generation
   - FLUX.1-schnell for image generation
   - Tavily API for web search and content extraction
-  - Google's Gemma 2B via Ollama for local processing
+  - Meta's Llama 3.2 3B via Ollama for local processing
 - **Database**: ChromaDB for vector storage
 - **Frontend**: JavaScript, TailwindCSS
 
