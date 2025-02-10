@@ -19,7 +19,7 @@ A modern, feature-rich AI assistant platform built with FastAPI, Gemini, and Tav
 
 ### 3. Local AI Model Support
 - Integration with Ollama for local model inference
-- Meta's Llama3.2 3B model for offline processing
+- Google's Gemma 2B model for offline processing
 - Lightweight yet powerful responses
 - Privacy-focused local computation
 - Markdown formatting and code highlighting
@@ -71,7 +71,6 @@ A modern, feature-rich AI assistant platform built with FastAPI, Gemini, and Tav
 ## Setup
 
 ### Prerequisites
-- Python 3.11
 - Git
 - For Windows: PowerShell with administrator privileges
 - For macOS/Linux: Terminal with sudo access
@@ -96,8 +95,6 @@ GOOGLE_APPLICATION_CREDENTIALS=credentials/google-cloud-credentials.json (dont c
 # Download JSON and save in credentials/ folder which is already there, just paste it.
 ```
 
-The setup scripts will automatically create the credentials directory if it doesn't exist.
-
 ### Installation
 
 1. Clone the repository:
@@ -114,6 +111,15 @@ cd knowflow
 .\setup.ps1
 ```
 
+The Windows setup script will automatically:
+1. Install Python 3.11 if not present
+2. Create a Python virtual environment
+3. Activate the virtual environment
+4. Install uv package manager in the virtual environment
+5. Install project requirements using uv
+6. Install and configure Ollama
+7. Pull the Llama 3.2 model
+
 #### For macOS/Linux:
 ```bash
 # Make the setup script executable
@@ -122,32 +128,36 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-The setup scripts will automatically:
-- Install Python 3.11 if not present
-- Create a Python virtual environment
-- Install required packages
-- Install and configure Ollama
-- Pull the lama3.2 3B model
-- Set up all necessary dependencies
+The macOS/Linux setup script will automatically:
+1. Install Homebrew (macOS only)
+2. Install Python 3.11
+3. Create a Python virtual environment
+4. Activate the virtual environment
+5. Install uv package manager in the virtual environment
+6. Install project requirements using uv
+7. Install and configure Ollama
+8. Pull the Llama 3.2 model
 
 ### Running the Application
 
 Start the application:
 
-**Important**: You need to activate the virtual environment in EACH NEW terminal session before running the application.
+**Note**: The virtual environment is already activated during setup. You only need to activate it again if you open a new terminal session.
 
 #### For Windows:
 ```powershell
-# Activate virtual environment (required for each new terminal session)
+# Only if opening a new terminal:
 .\venv\Scripts\Activate.ps1
+
 # Start the FastAPI server
 uvicorn main:app --reload
 ```
 
 #### For macOS/Linux:
 ```bash
-# Activate virtual environment (required for each new terminal session)
+# Only if opening a new terminal:
 source venv/bin/activate
+
 # Start the FastAPI server
 uvicorn main:app --reload
 ```
