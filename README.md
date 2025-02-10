@@ -19,7 +19,7 @@ A modern, feature-rich AI assistant platform built with FastAPI, Gemini, and Tav
 
 ### 3. Local AI Model Support
 - Integration with Ollama for local model inference
-- Google's Gemma 2B model for offline processing
+- Meta's Llama3.2 3B model for offline processing
 - Lightweight yet powerful responses
 - Privacy-focused local computation
 - Markdown formatting and code highlighting
