@@ -5,51 +5,46 @@ if (-not $isAdmin) {
     exit 1
 }
 
-# Function to install Python if not present
-function Install-Python {
-    if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-        Write-Host "Step 1: Installing Python 3.11..."
-        # Download Python 3.11 installer
-        $pythonUrl = "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe"
-        $installerPath = "$env:TEMP\python-3.11.0-amd64.exe"
-        Invoke-WebRequest -Uri $pythonUrl -OutFile $installerPath
-        
-        # Install Python
-        Start-Process -FilePath $installerPath -ArgumentList "/quiet", "InstallAllUsers=1", "PrependPath=1" -Wait
-        Remove-Item $installerPath
-        
-        # Refresh environment variables
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    } else {
-        Write-Host "Python 3.11 is already installed"
-    }
+# Step 1: Install Python 3.11 if not present
+Write-Host "Step 1: Installing Python 3.11..."
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+    # Download Python 3.11 installer
+    $pythonUrl = "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe"
+    $installerPath = "$env:TEMP\python-3.11.0-amd64.exe"
+    Invoke-WebRequest -Uri $pythonUrl -OutFile $installerPath
+    
+    # Install Python with pip and add to PATH
+    Start-Process -FilePath $installerPath -ArgumentList "/quiet", "InstallAllUsers=1", "PrependPath=1" -Wait
+    Remove-Item $installerPath
+    
+    # Refresh environment variables
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+} else {
+    Write-Host "Python already installed"
 }
 
-# Step 1: Install Python 3.11 if needed
-Install-Python
-
-# Step 2: Install uv globally
-Write-Host "Step 2: Installing uv globally..."
-python -m pip install --user uv
-
-# Step 3: Create virtual environment
-Write-Host "Step 3: Creating virtual environment with Python 3.11..."
+# Step 2: Create virtual environment
+Write-Host "Step 2: Creating virtual environment..."
 python -m venv venv
 
-# Step 4: Activate virtual environment
-Write-Host "Step 4: Activating virtual environment..."
+# Step 3: Activate virtual environment
+Write-Host "Step 3: Activating virtual environment..."
 .\venv\Scripts\Activate.ps1
 
 # Verify Python version
 $pythonVersion = python --version
 Write-Host "Using $pythonVersion in virtual environment"
 
-# Step 5: Install requirements using uv
-Write-Host "Step 5: Installing requirements using uv..."
+# Step 4: Install uv inside virtual environment
+Write-Host "Step 4: Installing uv in virtual environment..."
+python -m pip install uv
+
+# Step 5: Install project requirements using uv
+Write-Host "Step 5: Installing project requirements..."
 uv pip install -r requirements.txt
 
-# Install Ollama
-Write-Host "Installing Ollama..."
+# Step 6: Install Ollama
+Write-Host "Step 6: Installing Ollama..."
 $ollamaUrl = "https://github.com/ollama/ollama/releases/latest/download/ollama-windows.zip"
 $ollamaZip = "$env:TEMP\ollama-windows.zip"
 $ollamaDir = "$env:ProgramFiles\Ollama"
@@ -73,8 +68,8 @@ Start-Process -FilePath "$ollamaDir\ollama.exe" -ArgumentList "serve" -WindowSty
 # Wait for Ollama service to start
 Start-Sleep -Seconds 5
 
-# Pull Llama model
-Write-Host "Pulling Llama 3.2 3B model..."
+# Step 7: Pull Llama model
+Write-Host "Step 7: Pulling Llama 3.2 model..."
 ollama pull llama3.2
 
 Write-Host "Setup completed successfully!"
