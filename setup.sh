@@ -96,23 +96,56 @@ else
 fi
 
 # Start Ollama service if not running
-if ! pgrep -x "ollama" > /dev/null; then
-    echo "Starting Ollama service..."
-    if [ "$OS" = "Mac" ]; then
-        brew services start ollama
-    else
-        sudo systemctl start ollama
-    fi
-    # Wait for service to start
-    sleep 5
+echo "Starting Ollama service..."
+if [ "$OS" = "Mac" ]; then
+    # Stop any existing service first
+    brew services stop ollama 2>/dev/null
+    # Start the service fresh
+    brew services start ollama
+    # Wait for service to be fully ready
+    echo "Waiting for Ollama service to start (this may take a minute)..."
+    for i in {1..6}; do
+        if pgrep -x "ollama" > /dev/null && ollama list &>/dev/null; then
+            echo "✓ Ollama service is running and responding"
+            break
+        elif [ $i -eq 6 ]; then
+            echo "Error: Failed to start Ollama service after 30 seconds"
+            echo "Please try running: brew services restart ollama"
+            exit 1
+        else
+            echo "Waiting for Ollama service to be ready... (attempt $i/6)"
+            sleep 5
+        fi
+    done
+else
+    sudo systemctl restart ollama
+    echo "Waiting for Ollama service to start (this may take a minute)..."
+    for i in {1..6}; do
+        if systemctl is-active --quiet ollama && ollama list &>/dev/null; then
+            echo "✓ Ollama service is running and responding"
+            break
+        elif [ $i -eq 6 ]; then
+            echo "Error: Failed to start Ollama service after 30 seconds"
+            echo "Please try running: sudo systemctl restart ollama"
+            exit 1
+        else
+            echo "Waiting for Ollama service to be ready... (attempt $i/6)"
+            sleep 5
+        fi
+    done
 fi
 
 # Step 8: Pull Llama model
-echo "Step 8: Pulling Llama 3.2 model..."
+echo "Step 8: Pulling Llama 3.2 model (this may take several minutes)..."
 if ! ollama list | grep -q "llama3.2"; then
-    ollama pull llama3.2
+    echo "Downloading Llama 3.2 model..."
+    ollama pull llama3.2 || {
+        echo "Error: Failed to pull Llama 3.2 model"
+        exit 1
+    }
+    echo "✓ Llama 3.2 model downloaded successfully"
 else
-    echo "Llama 3.2 model is already downloaded"
+    echo "✓ Llama 3.2 model is already downloaded"
 fi
 
 echo "Setup completed successfully!"
