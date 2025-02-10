@@ -91,7 +91,7 @@ HUGGINGFACE_API_KEY=your_huggingface_api_key
 LLAMA_CLOUD_API_KEY=your_llama_api_key
 # Get from LlamaCloud Dashboard: https://cloud.llama-api.com/
 
-GOOGLE_APPLICATION_CREDENTIALS==credentials/google-cloud-credentials.json (dont achnge this path)
+GOOGLE_APPLICATION_CREDENTIALS=credentials/google-cloud-credentials.json (dont change this path)
 # Get from Google Cloud Console: https://console.cloud.google.com/apis/credentials
 # Download JSON and save in credentials/ folder which is already there, just paste it.
 ```
