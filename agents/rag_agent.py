@@ -14,6 +14,7 @@ from llama_parse import LlamaParse
 import asyncio
 import sys
 import aiohttp
+import datetime
 
 # Only apply nest_asyncio if we're not using uvloop
 if 'uvloop' not in sys.modules:
@@ -50,7 +51,10 @@ class RagAgent:
         # Initialize LlamaParse for document parsing
         self.parser = LlamaParse(
             api_key=self.llama_api_key,
-            result_type="markdown"
+            result_type="markdown",
+            output_tables_as_HTML=True,  # Better table handling
+            complemental_formatting_instruction="Extract and preserve document structure, including headers, lists, and tables. Maintain original formatting where possible.",
+            content_guideline_instruction="Focus on extracting main content, preserve table structures, and maintain document hierarchy. Include all relevant text and data."
         )
         
         # Initialize text splitter
@@ -141,11 +145,20 @@ class RagAgent:
             
             if not documents:
                 raise Exception("No content extracted from document")
-                
-            # Return the parsed content
+            
+            # Enhanced parsing result handling
+            parsed_content = documents[0]
+            
+            # Return enhanced parsed content with better structure
             return {
-                "content": documents[0].text,
-                "metadata": documents[0].metadata
+                "content": parsed_content.text,
+                "metadata": {
+                    **parsed_content.metadata,
+                    "file_type": mimetypes.guess_type(filename)[0],
+                    "filename": filename,
+                    "parse_timestamp": str(datetime.datetime.now()),
+                    "has_tables": "<table" in parsed_content.text  # Check if HTML tables are present
+                }
             }
                 
         except Exception as e:
