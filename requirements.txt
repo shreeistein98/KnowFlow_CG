@@ -34,10 +34,5 @@ asyncio==3.4.3
 # Gradio
 gradio-client
 
-# Document Parsing
-PyPDF2==3.0.1
-python-docx==1.1.0
-chardet==5.2.0  # For file encoding detection
 
-# Note: csv and json are built-in Python libraries, no need to install them
 
