@@ -1,5 +1,6 @@
 # KnowFlow - AI Assistant Platform
 
+Think of a ChatGPT which you can use without Internet!!!! yea you heard it right - You very own ChatGPT on your local machine -> that's KnowFlow
 A modern, feature-rich AI assistant platform built with FastAPI, Gemini, and Tavily, offering multiple interaction modes and advanced capabilities.
 
 ## Key Features
