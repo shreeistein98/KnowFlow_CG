@@ -31,8 +31,8 @@ templates = Jinja2Templates(directory="templates")
 
 # Store user sessions with timestamps
 user_sessions: Dict[str, tuple[TextAgent, datetime]] = {}
+local_sessions: Dict[str, tuple[LocalAgent, datetime]] = {}  # Add local sessions dictionary
 rag_agent = RagAgent()  # Initialize RAG agent
-local_agent = LocalAgent()  # Initialize local agent instance
 live_agent = LiveAgent()  # Initialize live agent instance
 
 class ChatMessage(BaseModel):
@@ -55,6 +55,14 @@ def cleanup_old_sessions():
     ]
     for session_id in expired_sessions:
         del user_sessions[session_id]
+        
+    # Also cleanup local sessions
+    expired_local_sessions = [
+        session_id for session_id, (_, timestamp) in local_sessions.items()
+        if current_time - timestamp > timedelta(hours=1)
+    ]
+    for session_id in expired_local_sessions:
+        del local_sessions[session_id]
 
 @app.get("/")
 async def root(request: Request):
@@ -74,9 +82,17 @@ async def chat(message: ChatMessage):
                         yield json.dumps({"chunk": chunk}, ensure_ascii=False) + "\n"
             return StreamingResponse(generate_response(), media_type="application/x-ndjson")
         elif message.is_local_mode:
-            # Use LocalAgent for Ollama-based responses
+            # Get or create local session
+            if not message.session_id or message.session_id not in local_sessions:
+                local_sessions[message.session_id] = (LocalAgent(), datetime.now())
+            else:
+                agent, _ = local_sessions[message.session_id]
+                local_sessions[message.session_id] = (agent, datetime.now())
+            
+            local_agent = local_sessions[message.session_id][0]
+            
             async def generate_response():
-                async for chunk in local_agent.get_streaming_response(message.message):
+                async for chunk in local_agent.get_streaming_response(message.message, message.session_id):
                     if chunk.strip():
                         yield json.dumps({"chunk": chunk}, ensure_ascii=False) + "\n"
             return StreamingResponse(generate_response(), media_type="application/x-ndjson")
